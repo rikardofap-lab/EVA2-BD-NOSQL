@@ -172,17 +172,62 @@ db.Usuarios.updateMany({"configuracion.idioma": "Español", nombre: "Diego Muño
 
 // Bloque 2: Operaciones con Arreglos (Arrays)
 // 9. Agregar elementos a un array: Agrega el elemento "Pase Familiar" al arreglo suscripcion.planes (con $addToSet) solo para los usuarios que tengan actualmente el plan "Estándar" y registren 2 pantallas_activas. 
-// 10. Quitar elementos a un array: Quita el elemento "Miembro Extra" del arreglo suscripcion.planes (con $pull) para los usuarios que tengan 0 pantallas_activas y un suscripcion.costo de 13480. 
+db.Usuarios.updateMany({$and:[{'suscripcion.planes':'Estándar'},{'suscripcion.pantallas_activas':2}]},{$addToSet:{'suscripcion.planes':'Pase Familiar'}})
+
+// 10. Quitar elementos a un array: Quita el elemento "Miembro Extra" del arreglo suscripcion.planes (con $pull) para los usuarios que tengan 2 pantallas_activas y un suscripcion.costo de 10810. 
+db.Usuarios.updateMany({$and:[{'suscripcion.costo':10810},{'suscripcion.pantallas_activas':2}]},{$pull:{'suscripcion.planes':'Miembro Extra'}})
+
 // Bloque 3: Consultas Avanzadas y Agregaciones (Listar datos)
 // 11. Sentencias de búsqueda y reportería:
-// •	a. Una sentencia que busque usuarios usando $regex en el nombre que contenga "Soto", aplicando options: 'i' (Nota: La guía dice '1', pero en MongoDB se usa 'i' para ignorar mayúsculas. Lo haremos con 'i' para que no te dé error de sintaxis).
+// •	a. Una sentencia que busque usuarios usando $regex en el nombre que contenga "Soto", aplicando options: 'i'
+db.Usuarios.find({nombre:{$regex:'Soto',$options:'i'}})
+
 // •	b. Una sentencia de agregación que use $sum para obtener el costo total de todas las suscripciones de la plataforma.
+db.Usuarios.aggregate(
+    {$unwind:'$suscripcion.costo'},
+    {$group:{_id:"", total:{$sum:'$suscripcion.costo'}}}
+)
+
 // •	c. Una sentencia que use $avg para obtener el promedio de pantallas asignadas a los usuarios.
+db.Usuarios.aggregate(
+    {$unwind:'$suscripcion.pantallas_activas'},
+    {$group:{_id:"", total:{$avg:'$suscripcion.pantallas_activas'}}}
+)
+
 // •	d. Una sentencia que combine la agregación anterior usando $round para redondear el promedio anterior a 0 decimales.
+db.Usuarios.aggregate(
+    {$unwind:'$suscripcion.pantallas_activas'},
+    {$group:{_id:"", total:{$avg:'$suscripcion.pantallas_activas'}}},
+    {$project:{total_redondeado:{$round:['$total', 0]}}}
+)
+
 // •	e. Una sentencia que use $concat para mostrar en una sola cadena: "Usuario: [nombre] - Correo: [email]".
+db.Usuarios.aggregate(
+    {$project:{Cadena_unica:{$concat:['$nombre','$email']}}}
+)
+
 // •	f. Una sentencia de agrupación ($group) por configuracion.idioma que cuente cuántos usuarios hay por idioma usando { $sum: 1 }.
+db.Usuarios.aggregate(
+    {$unwind:'$configuracion.idioma'},
+    {$group: {_id:'$configuracion.idioma', cantidad:{$sum:1}}}
+)
+
 // •	g. Una rutina que implemente .forEach() para listar en la consola de la terminal los nombres de los usuarios en mayúsculas.
+db.Usuarios.aggregate(
+    {$project:{_id:0, Nombre:{$toUpper: '$nombre'}}}
+).forEach(doc => printjson(doc))
+
 // •	h. Una sentencia que use $in para listar los usuarios cuyo configuracion.dispositivo_principal sea "Smartphone" o "Tablet".
+db.Usuarios.find({'configuracion.dispositivo_principal':{$in:["Smartphone", "Tablet"]}})
+
 // •	i. Una sentencia que use $all para buscar los usuarios que tengan exactamente los planes ["Premium", "Miembro Extra"].
-// •	j. Una sentencia que use $slice para proyectar los documentos mostrando únicamente el primer plan del array de planes.
+db.Usuarios.find({'suscripcion.planes':{$all:["Premium", "Miembro Extra"]}})
+
+// •	j. Una sentencia que use $slice para proyectar los documentos mostrando el primer plan del array de planes.
+db.Usuarios.find({},{_id:0, primer_plan:{'suscripcion.planes':{$slice:[0,1]}}})
+
 // •	k. Una sentencia de agregación que use $unwind para descomponer el array suscripcion.planes.
+db.Usuarios.aggregate(
+    {$unwind:'$suscripcion.planes'},
+    {$group:{_id:'$suscripcion.planes', cantidad_planes:{$sum:1}}}
+)
