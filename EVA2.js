@@ -154,21 +154,53 @@ db.Usuarios.insertMany([
 // Bloque 1:
 // Escribe las sentencias para este primer set de modificaciones. Todas aplican dos condiciones de filtrado según exige la pauta: 
 
-
-db.Usuarios.updateOne({"configuracion.idioma": "Inglés", nombre: "Diego Muñoz"}, {$set: {"nombre": "Diego Muñoz El Original"}})
-// •	2. Modificar atributo simple: Modifica el nombre a "Diego Muñoz El Original" únicamente para el usuario llamado "Diego Muñoz" que use el idioma "Español". 
+// •	2. Modificar atributo simple: Modifica el nombre a "Diego Muñoz El Original" únicamente para el usuario llamado "Diego Muñoz" que use el idioma "Inglés". 
+db.Usuarios.updateMany({"configuracion.idioma": "Inglés", nombre: "Diego Muñoz"}, {$set: {"nombre": "Diego Muñoz El Original"}})
+// db.Usuarios.find(
+//     {"nombre":/Diego Muñoz/},
+//     {nombre:1, email:1, _id:0, configuracion:1}
+// )
 
 // •	3. Modificar subatributo: Cambia el configuracion.dispositivo_principal a "Apple TV" para quienes tengan el plan "Premium" y registren exactamente 3 pantallas_activas.
+db.Usuarios.updateMany({"suscripcion.planes":"Premium", "suscripcion.pantallas_activas":3},{$set:{"configuracion.dispositivo_principal": "Apple TV"}})
+// db.Usuarios.find(
+//     {"suscripcion.planes":"Premium", "suscripcion.pantallas_activas":3},
+//     {"configuracion.dispositivo_principal":1}
+// )
 
 // •	4. Renombrar atributo simple: Renombra el campo email a correo para cuentas con idioma "Español" y que lleven acumulados más de 6 meses_inactivo (usa $gt: 6). 
+db.Usuarios.updateMany({"configuracion.idioma": "Español", "suscripcion.meses_inactivo": { $gt: 6 } },{$rename: {"email": "correo"}})
+// db.Usuarios.find(
+//     {"configuracion.idioma": "Español", "suscripcion.meses_inactivo": { $gt: 6 }},
+//     {}
+// )
 
 // •	5. Renombrar atributo de una subestructura: Renombra configuracion.dispositivo_principal a configuracion.pantalla_hogar para cuentas con el plan "Básico" y que tengan 0 pantallas_activas. 
+db.Usuarios.updateMany({"suscripcion.planes":"Básico", "suscripcion.pantallas_activas": 0},{$rename:{"configuracion.dispositivo_principal": "configuracion.pantalla_hogar"}})
+// db.Usuarios.find(
+//     {"suscripcion.planes":"Básico", "suscripcion.pantallas_activas": 0},
+//     {}
+// )
 
 // •	6. Eliminar un atributo simple: Elimina el campo email (con $unset) para usuarios con idioma "Portugués" y exactamente 12 meses_inactivo. 
+db.Usuarios.updateMany({"configuracion.idioma": "Portugués", "suscripcion.meses_inactivo": 12},{$unset: {"email":""}})
+// db.Usuarios.find(
+//     {"configuracion.idioma": "Portugués", "suscripcion.meses_inactivo": 12}
+// )
 
 // •	7. Eliminar un atributo de una subestructura: Elimina el subatributo configuracion.idioma para usuarios con plan "Estándar" y que tengan 2 pantallas_activas. 
+db.Usuarios.updateMany({"suscripcion.planes": "Estándar", "suscripcion.pantallas_activas": 2},{$unset: {"configuracion.idioma":""}})
+// db.Usuarios.find(
+//     {"suscripcion.planes": "Estándar", "suscripcion.pantallas_activas": 2},
+//     {"configuracion.idioma": 1}
+// )
 
 // •	8. Eliminar documentos (Limpieza de bajas): Elimina de la base de datos a los usuarios del plan "Básico" que lleven 12 o más meses_inactivo (usa $gte: 12). Nota: Esto borrará exactamente 5 documentos reales que cumplen ambas condiciones. 
+db.Usuarios.deleteMany({"suscripcion.planes": "Básico", "suscripcion.meses_inactivo": {$gte:12}})
+// db.Usuarios.find(
+//     {"suscripcion.planes": "Básico", "suscripcion.meses_inactivo": {$gte:12}},
+//      {}
+//     )
 
 // Bloque 2: Operaciones con Arreglos (Arrays)
 // 9. Agregar elementos a un array: Agrega el elemento "Pase Familiar" al arreglo suscripcion.planes (con $addToSet) solo para los usuarios que tengan actualmente el plan "Estándar" y registren 2 pantallas_activas. 
