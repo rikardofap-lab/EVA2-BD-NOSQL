@@ -1,6 +1,6 @@
 use UsuariosNetflix
 
-createCollection("Usuarios")
+db.createCollection("Usuarios")
 
 db.Usuarios.insertMany([
     
@@ -155,7 +155,7 @@ db.Usuarios.insertMany([
 // Escribe las sentencias para este primer set de modificaciones. Todas aplican dos condiciones de filtrado según exige la pauta: 
 
 
-db.Usuarios.updateMany({"configuracion.idioma": "Español", nombre: "Diego Muñoz"}, {$set: {"nombre": "Diego Muñoz El Original"}})
+db.Usuarios.updateOne({"configuracion.idioma": "Inglés", nombre: "Diego Muñoz"}, {$set: {"nombre": "Diego Muñoz El Original"}})
 // •	2. Modificar atributo simple: Modifica el nombre a "Diego Muñoz El Original" únicamente para el usuario llamado "Diego Muñoz" que use el idioma "Español". 
 
 // •	3. Modificar subatributo: Cambia el configuracion.dispositivo_principal a "Apple TV" para quienes tengan el plan "Premium" y registren exactamente 3 pantallas_activas.
